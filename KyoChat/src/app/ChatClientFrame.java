@@ -137,7 +137,6 @@ public class ChatClientFrame {
 	    input.addActionListener(e -> {
 	        String message = input.getText().trim();
 	        if (!message.isEmpty()) {
-	            chatArea.append(message+"\n");
 	    		System.out.println("[ChatClientFrame] EnterKeyPressListener() Sending message to server.");
 	    		ServerHandler.getInstance().SendMessage(message);
 	            input.setText("");
@@ -150,7 +149,6 @@ public class ChatClientFrame {
 		send.addActionListener(e -> {
 	        String message = input.getText().trim();
 	        if (!message.isEmpty()) {
-	            chatArea.append(message+"\n");
 	    		System.out.println("[ChatClientFrame] SendButtonPressListener() Sending message to server.");
 	    		ServerHandler.getInstance().SendMessage(message);
 	            input.setText("");

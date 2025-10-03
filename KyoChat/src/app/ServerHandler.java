@@ -1,5 +1,6 @@
 package app;
 
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.HashMap;
@@ -7,6 +8,8 @@ import java.util.HashMap;
 public class ServerHandler {
 	private Socket server;
 	private static ServerHandler instance = new ServerHandler();
+	private ObjectOutputStream server_message;
+	private ObjectInputStream server_response;
 	
 	private ServerHandler() {
 		ConnectServer();
@@ -15,10 +18,13 @@ public class ServerHandler {
 	public static ServerHandler getInstance() {
 		return instance;
 	}
+	
 	public boolean ConnectServer() {
 		boolean retcode = false;
 		try {
-			server = new Socket("localhost", 9090);
+			server = new Socket(ServerHostInfo.getInstance().getHost(), ServerHostInfo.getInstance().getPort());
+			server_message = new ObjectOutputStream(server.getOutputStream());
+			server_response = new ObjectInputStream(server.getInputStream());
 			retcode = isServerOnline();
 			
 			if(true == retcode) {
@@ -57,12 +63,11 @@ public class ServerHandler {
 		boolean retcode;
 		System.out.println("[ServerHandler] login() logging in the user into the server.");
 		try {
-			ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
-			ServerRequestBuilder request = new ServerRequestBuilder();
-			HashMap<String, String> req = request.build("login", name);
-			System.out.println("[ServerHandler] login() sending request to server.");
-			out.writeObject(req);
-			out.flush();
+			HashMap<String, String> req = ServerRequestBuilder.getInstance().build("login", name);
+			System.out.println("[ServerHandler] login() sending request to server.="+req.toString());
+			server_message.writeObject(req);
+			server_message.flush();
+			//server_message = null;
 			retcode = true;
 		} catch (Exception e) {
 			System.out.println("[ServerHandler] login() ERROR! " + e.getMessage());
@@ -77,12 +82,11 @@ public class ServerHandler {
 		boolean retcode;
 		System.out.println("[ServerHandler] logout() logging out the user from the server.");
 		try {
-			ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
-			ServerRequestBuilder request = new ServerRequestBuilder();
-			HashMap<String, String> req = request.build("logout", name);
-			System.out.println("[ServerHandler] logout() sending request to server.");
-			out.writeObject(req);
-			out.flush();
+			HashMap<String, String> req = ServerRequestBuilder.getInstance().build("logout", name);
+			System.out.println("[ServerHandler] logout() sending request to server.="+req.toString());
+			server_message.writeObject(req);
+			server_message.flush();
+			//server_message = null;
 			retcode = true;
 		} catch (Exception e) {
 			System.out.println("[ServerHandler] logout() ERROR! " + e.getMessage());
@@ -96,12 +100,11 @@ public class ServerHandler {
 	public boolean SendMessage(String message) {
 		boolean retcode;
 		try {
-			ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
-			ServerRequestBuilder request = new ServerRequestBuilder();
-			HashMap<String, String> req = request.build("msg", message);
-			System.out.println("[ServerHandler] SendMessage() sending request to server.");
-			out.writeObject(req);
-			out.flush();
+			HashMap<String, String> req = ServerRequestBuilder.getInstance().build("msg", message);
+			System.out.println("[ServerHandler] SendMessage() sending request to server. req="+req.toString());
+			server_message.writeObject(req);
+			server_message.flush();
+			//server_message = null;
 			retcode = true;
 		} catch (Exception e) {
 			System.out.println("[ServerHandler] SendMessage() ERROR! " + e.getMessage());
@@ -128,7 +131,7 @@ public class ServerHandler {
 			break;
 		case "msg":
 			System.out.println("[ServerHandler] ReceiveMessage() message received.");
-			ChatClientFrame.getInstance().UpdateChat(ServerResponseBuilder.getInstance().getResponse());
+			ChatClientFrame.getInstance().UpdateChat(ServerResponseBuilder.getInstance().getResponse()+"\n");
 			break;
 		}
 	}
@@ -157,5 +160,9 @@ public class ServerHandler {
 			System.out.println("[ServerHandler] recordPeers() name=" + peers[ctr]);
 			Peers.getInstance().addPeer(peers[ctr]);
 		}
+	}
+	
+	public ObjectInputStream getObjectInputStream() {
+		return server_response;
 	}
 }

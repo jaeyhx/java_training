@@ -16,9 +16,9 @@ public class ServerListener extends Thread {
 	@Override
 	public void run() {
         try {
+    		server_message = ServerHandler.getInstance().getObjectInputStream();
             while (true) {
         		System.out.println("[ServerListener] ServerListener() listening to server.");
-        		server_message = new ObjectInputStream(server.getInputStream());
                 HashMap<String,String> in = (HashMap<String,String>) server_message.readObject();
         		System.out.println("[ServerListener] ServerListener() server reply received.");
                 if (in instanceof HashMap) {
