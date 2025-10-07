@@ -2,16 +2,19 @@ package appframe;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.HashMap;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -21,6 +24,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import appclass.Authentication;
 import appclass.Constants;
@@ -61,16 +65,22 @@ public class ChatClientFrame {
 		System.out.println("[ChatClientFrame] initialize() creating chat UI.");
 		clientFrame.setMinimumSize(new Dimension(800,600));
 		clientFrame.setSize(800,600);
+
+		peer_msg.setLayout(new BoxLayout(peer_msg, BoxLayout.Y_AXIS)); // vertical stacking
+		peer_msg.setAlignmentY(Component.TOP_ALIGNMENT);               // top alignment
 		
+		scroll = new JScrollPane(peer_msg);
+		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		scroll.getVerticalScrollBar().setUnitIncrement(16); // smoother scroll
+		scroll.setSize(new Dimension(600, 400));
+
 		send.setMinimumSize(new Dimension(100,50));
 		send.setPreferredSize(new Dimension(100,50));
 		
 		input.setMinimumSize(new Dimension(500,50));
 		input.setPreferredSize(new Dimension(500,50));
 	    
-		peer_msg.setLayout(new GridLayout(0,1));
-	    scroll = new JScrollPane(peer_msg);
-	    scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
 		
         burgerButton.setMinimumSize(new Dimension(50, 50));
         burgerButton.setPreferredSize(new Dimension(50, 50));
@@ -173,34 +183,92 @@ public class ChatClientFrame {
 	    });
 	}
 	
+	/*public void UpdateChat(String name, Color color, String message) {
+	    JPanel row = new JPanel();
+	    row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+
+	    //row.setSize(new Dimension(Integer.MAX_VALUE, 50));
+	    if (name.equals(User.getInstance().getUser())) {
+	    	message = message + " :" + User.getInstance().getUser() + "\n";
+	    } else {
+	    	message = name + ": " + message + "\n";
+	    }
+
+	    JTextArea msgText = new JTextArea(message);
+	    msgText.setLineWrap(true);
+	    msgText.setWrapStyleWord(true);
+	    msgText.setEditable(false);
+	    msgText.setBackground(color);
+	    msgText.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	    //msgText.setSize(new Dimension(Integer.MAX_VALUE, 50));
+	    msgText.setMaximumSize(new Dimension(500, Integer.MAX_VALUE));
+
+	    
+
+	    JPanel bubble = new JPanel(new BorderLayout());
+	    bubble.add(msgText, BorderLayout.CENTER);
+
+	    if (name.equals(User.getInstance().getUser())) {
+	        row.add(bubble, BorderLayout.EAST);
+	    } else {
+	        row.add(bubble, BorderLayout.WEST);
+	    }
+
+	    peer_msg.add(row);
+	    peer_msg.revalidate();
+	    peer_msg.repaint();
+
+	    JScrollBar vertical = scroll.getVerticalScrollBar();
+	    vertical.setValue(vertical.getMaximum());
+	}*/
 	public void UpdateChat(String name, Color color, String message) {
-	JPanel row = new JPanel(new BorderLayout());
-    row.setPreferredSize(new Dimension(100, 50));
-    row.setMaximumSize(new Dimension(100, 50));
-    row.setMinimumSize(new Dimension(100, 50));
+	    // Outer row panel: full width, no fixed height
+	    JPanel row = new JPanel(new BorderLayout());
+	    row.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-    JTextArea msgText = new JTextArea(message);
-    msgText.setLineWrap(true);
-    msgText.setWrapStyleWord(true);
-    msgText.setEditable(false);
-    msgText.setBackground(color);
-    msgText.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+	    // Bubble panel: contains sender + message
+	    JPanel bubble = new JPanel();
+	    bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
+	    bubble.setBackground(color);
+	    bubble.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8)); // compact padding
+	    bubble.setMaximumSize(new Dimension(400, Integer.MAX_VALUE)); // max width
 
-    // Wrap the message in a bubble panel
-    JPanel bubble = new JPanel(new BorderLayout());
-    bubble.add(msgText, BorderLayout.CENTER);
+	    JLabel senderLabel = new JLabel(name.equals(User.getInstance().getUser()) ? "You" : name);
+	    senderLabel.setForeground(Color.DARK_GRAY);
+	    senderLabel.setFont(senderLabel.getFont().deriveFont(12f));
 
-    if (name.equals(User.getInstance().getUser())) {
-        row.add(bubble, BorderLayout.EAST); // align right
-    } else {
-        row.add(bubble, BorderLayout.WEST); // align left
-    }
+	    JTextArea msgText = new JTextArea(message);
+	    msgText.setLineWrap(true);
+	    msgText.setWrapStyleWord(true);
+	    msgText.setEditable(false);
+	    msgText.setOpaque(false); // transparent so bubble color shows through
+	    msgText.setMaximumSize(new Dimension(400, Integer.MAX_VALUE));
 
-    peer_msg.add(row);
-    peer_msg.revalidate();
-    peer_msg.repaint();
+	    bubble.add(senderLabel);
+	    bubble.add(msgText);
 
-    JScrollBar vertical = scroll.getVerticalScrollBar();
-    vertical.setValue(vertical.getMaximum());
+	    // Alignment wrapper: aligns bubble left or right
+	    JPanel alignWrapper = new JPanel();
+	    alignWrapper.setLayout(new BoxLayout(alignWrapper, BoxLayout.X_AXIS));
+	    alignWrapper.setOpaque(false);
+
+	    if (name.equals(User.getInstance().getUser())) {
+	        alignWrapper.add(Box.createHorizontalGlue());
+	        alignWrapper.add(bubble);
+	    } else {
+	        alignWrapper.add(bubble);
+	        alignWrapper.add(Box.createHorizontalGlue());
+	    }
+
+	    row.add(alignWrapper, BorderLayout.CENTER);
+	    peer_msg.add(row);
+	    peer_msg.revalidate();
+	    peer_msg.repaint();
+
+	    SwingUtilities.invokeLater(() -> {
+	        JScrollBar vertical = scroll.getVerticalScrollBar();
+	        vertical.setValue(vertical.getMaximum());
+	    });
 	}
+
 }

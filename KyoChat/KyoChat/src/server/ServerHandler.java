@@ -96,7 +96,9 @@ public class ServerHandler {
 			System.out.println("[ServerHandler] ReceiveMessage() message received. received from: " + name);
 			System.out.println("[ServerHandler] ReceiveMessage() message received. peers count: " + peerslist.size());
 			System.out.println("[ServerHandler] ReceiveMessage() message received. received color: " + peerslist.get(name));
-			ChatClientFrame.getInstance().UpdateChat(name, peerslist.get(name),ServerResponseBuilder.getInstance().getMessage() + "\n");
+			System.out.println("[ServerHandler] ReceiveMessage() message received. msg=: " + ServerResponseBuilder.getInstance().getMessage());
+			
+			ChatClientFrame.getInstance().UpdateChat(name, peerslist.get(name),ServerResponseBuilder.getInstance().getMessage());
 			//ChatClientFrame.getInstance().UpdateChat((Peers.getInstance().getPeers()).get(ServerResponseBuilder.getInstance().getName()), ServerResponseBuilder.getInstance().getResponseMessage()+"\n");
 			break;
 		}
